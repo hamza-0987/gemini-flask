@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHAHEEN Chatbot</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.5/lottie.min.js"></script>
+</head>
+<body class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white min-h-screen flex flex-col">
+  <div class="container mx-auto px-4 flex-grow">
+    <header class="text-center my-12">
+      <h1 class="text-5xl font-extrabold">SHAHEEN Chatbot</h1>
+      <p class="text-gray-200 mt-3">Visit my <a href="https://www.linkedin.com/in/hamza-075864228" class="text-yellow-300 hover:text-yellow-500" target="_blank">Profile</a>.</p>
+    </header>
+
+    <div id="chat-container" class="mb-24 space-y-4 overflow-y-auto max-h-96 p-4 bg-white bg-opacity-10 rounded-lg">
+      <!-- Messages will be appended here -->
+    </div>
+
+    <div id="animation-container" class="hidden flex justify-center items-center">
+      <div id="lottie" style="width: 150px; height: 150px;"></div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 bg-opacity-90 backdrop-blur-lg">
+      <div class="flex">
+        <input type="text" id="chat-input" placeholder="Type your message here..." class="flex-1 p-3 rounded-l-lg focus:outline-none text-gray-900">
+        <button id="gpt-button" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 py-2 px-4 rounded-r-lg">
+          Send
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Load Lottie animation
+      var animation = lottie.loadAnimation({
+        container: document.getElementById('lottie'), // the DOM element
+        renderer: 'svg',
+        loop: true,
+        autoplay: false,
+        path: 'https://assets4.lottiefiles.com/packages/lf20_jcikwtux.json' // replace with your animation JSON path
+      });
+
+      function sendMessage() {
+        const inputVal = $('#chat-input').val();
+        $('#chat-input').val('');
+        if (inputVal.trim() !== '') {
+          $('#chat-container').append(`
+            <div class="bg-gray-800 p-4 rounded-lg self-end max-w-lg mx-auto">
+              <p>${inputVal}</p>
+            </div>
+          `);
+          
+          $('#animation-container').removeClass('hidden');
+          animation.play();
+
+          $.post("/", { prompt: inputVal }, function(response) {
+            console.log("Full API Response:", response);  // Print full API response to the console for debugging
+            animation.stop();
+            $('#animation-container').addClass('hidden');
+
+            let responseText = "Sorry, but Gemini didn't want to answer that!";
+            if (response.text) {
+              responseText = response.text;
+            }
+
+            $('#chat-container').append(`
+              <div class="bg-purple-600 p-4 rounded-lg self-start max-w-lg mx-auto">
+                <p>${responseText}</p>
+              </div>
+            `);
+            $('html, body').animate({ scrollTop: $(document).height() }, 'slow');
+          }).fail(function() {
+            animation.stop();
+            $('#animation-container').addClass('hidden');
+            $('#chat-container').append(`
+              <div class="bg-red-600 p-4 rounded-lg self-start max-w-lg mx-auto">
+                <p>Error: Unable to get response. Please try again.</p>
+              </div>
+            `);
+          });
+        }
+      }
+
+      $('#gpt-button').click(function() {
+        sendMessage();
+      });
+
+      $('#chat-input').keypress(function(e) {
+        if (e.which == 13) {
+          sendMessage();
+          return false; // Prevent the default form submission on Enter
+        }
+      });
+    });
+  </script>
+</body>
+</html>
